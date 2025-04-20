@@ -199,17 +199,18 @@ func (h *AuthHandler) VerificationEmailHandler(c *gin.Context) {
 
 func (h *AuthHandler) GetProfile(c *gin.Context) {
 	user := c.MustGet("user").(models.UserModel)
-	h.ctx.DB.Preload("Companies").Preload("Roles", "company_id = ?", c.MustGet("companyID").(string)).Find(&user)
-	member := c.MustGet("member").(models.CooperativeMemberModel)
-	if member.Role != nil {
-		user.Roles = []models.RoleModel{*member.Role}
+	h.ctx.DB.Preload("Roles").Find(&user)
+	//
+	var role *models.RoleModel
+	if len(user.Roles) > 0 {
+		role = &user.Roles[0]
 	}
-	var memberData *models.CooperativeMemberModel
-	if member.ID != "" {
-		memberData = &member
-	}
-
-	c.JSON(200, gin.H{"user": user, "companies": user.Companies, "member": memberData})
+	c.JSON(200, gin.H{"user": gin.H{
+		"id":        user.ID,
+		"full_name": user.FullName,
+		"email":     user.Email,
+		"role":      *role,
+	}})
 }
 
 func (h *AuthHandler) UpdateProfile(c *gin.Context) {

@@ -1,0 +1,58 @@
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDc3MTYwNTMsImp0aSI6IjNlNWRiMzI2LTlmYjQtNGJmMC1iYzFjLWU3ZTg3ZjdmYTAyNyJ9.NU41TCXrZbAs6QbpQ0RVeEmQN7bAzcvLN1eVt7w1WOs
+### LOGIN
+POST http://localhost:8086/api/v1/auth/login
+
+{
+    "email": "ametsuramet@gmail.com",
+    "password": "balakutak"
+}
+
+
+### GET PROFILE
+GET http://localhost:8086/api/v1/auth/profile
+Authorization: Bearer {{token}}
+
+### GET PRODUCT
+GET http://localhost:8086/api/v1/product/list
+Authorization: Bearer {{token}}
+
+### CREATE PRODUCT
+POST http://localhost:8086/api/v1/product/create
+Authorization: Bearer {{token}}
+
+{
+    "name": "Product 3",
+    "price": 100,
+    "category_id": "b189ba78-481c-4912-9806-65fa5f42d0ec",
+    "unit_id": "fab2b55c-1a08-4565-8a46-fd5dd84c5656"
+}
+
+### ADD UNIT PRODUCT
+PUT http://localhost:8086/api/v1/product/53920bd1-cd1d-4cfe-a360-986a9b5658df/unit
+Authorization: Bearer {{token}}
+
+{
+    "unit_id": "fab2b55c-1a08-4565-8a46-fd5dd84c5656",
+    "is_default": true,
+    "value": 1
+}
+### CREATE PRODUCT CATEGORY
+POST http://localhost:8086/api/v1/product-category/create
+Authorization: Bearer {{token}}
+
+{
+    "name": "CAT 1"
+}
+
+### GET UNIT
+GET http://localhost:8086/api/v1/unit/list
+Authorization: Bearer {{token}}
+
+### CREATE UNIT
+POST http://localhost:8086/api/v1/unit/create
+Authorization: Bearer {{token}}
+
+{
+    "name": "Kilogram",
+    "code": "kg"
+}

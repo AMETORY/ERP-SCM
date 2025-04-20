@@ -81,6 +81,17 @@ func (a AppService) GenerateDefaultPermissions() []models.PermissionModel {
 
 func (a AppService) generatePermissions(services map[string][]map[string][]string) []models.PermissionModel {
 
+	// create Default SuperAdmin Role
+	var role models.RoleModel
+	err := a.ctx.DB.First(&role, "name = ?", "Super Admin").Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		role = models.RoleModel{
+			Name:         "Super Admin",
+			IsSuperAdmin: true,
+		}
+		a.ctx.DB.Create(&role)
+	}
+
 	var permissions []models.PermissionModel
 
 	for service, modules := range services {
@@ -99,4 +110,16 @@ func (a AppService) generatePermissions(services map[string][]map[string][]strin
 		}
 	}
 	return permissions
+}
+
+func (a AppService) CreateUserWithDefaultPermissions(user *models.UserModel) error {
+	role := models.RoleModel{}
+	err := a.ctx.DB.First(&role, "name = ?", "Super Admin").Error
+	if err != nil {
+		return err
+	}
+	if err := a.ctx.DB.Create(user).Error; err != nil {
+		return err
+	}
+	return a.ctx.DB.Model(user).Association("Roles").Append(&role)
 }

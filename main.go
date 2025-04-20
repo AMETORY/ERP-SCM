@@ -2,10 +2,13 @@ package main
 
 import (
 	ctx "context"
+	"flag"
+	"fmt"
 	"os"
 	"sample-scm-backend/api/routes"
 	"sample-scm-backend/config"
 	"sample-scm-backend/services"
+	"time"
 
 	"github.com/AMETORY/ametory-erp-modules/auth"
 	"github.com/AMETORY/ametory-erp-modules/context"
@@ -14,6 +17,8 @@ import (
 	"github.com/AMETORY/ametory-erp-modules/inventory"
 	"github.com/AMETORY/ametory-erp-modules/order"
 	"github.com/AMETORY/ametory-erp-modules/shared/audit_trail"
+	"github.com/AMETORY/ametory-erp-modules/shared/models"
+	"github.com/AMETORY/ametory-erp-modules/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -88,6 +93,48 @@ func main() {
 
 	distributionSrv := distribution.NewDistributionService(erpContext, auditTrailSrv, inventorySrv, orderService)
 	erpContext.DistributionService = distributionSrv
+
+	flagCreateUser := flag.Bool("create-user", false, "create user with default permissions")
+	flagEmail := flag.String("email", "", "user email")
+	flagFullName := flag.String("full-name", "", "user full name")
+	flagPassword := flag.String("password", "", "user password")
+	flag.Parse()
+
+	if *flagCreateUser {
+		if *flagEmail == "" {
+			fmt.Println("email is required")
+			return
+		}
+		if *flagPassword == "" {
+			fmt.Println("password is required")
+			return
+		}
+		if *flagFullName == "" {
+			fmt.Println("full name is required")
+			return
+		}
+		hashedPassword, err := models.HashPassword(*flagPassword)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		now := time.Now()
+		username := utils.CreateUsernameFromFullName(*flagFullName)
+		user := &models.UserModel{
+			Email:      *flagEmail,
+			Password:   hashedPassword,
+			Username:   username,
+			VerifiedAt: &now,
+			FullName:   *flagFullName,
+		}
+		err = appService.CreateUserWithDefaultPermissions(user)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println("user created")
+		return
+	}
 
 	v1 := r.Group("/api/v1")
 

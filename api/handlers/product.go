@@ -153,8 +153,6 @@ func (p *ProductHandler) CreateProductHandler(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	companyID := c.MustGet("companyID").(string)
-	input.CompanyID = &companyID
 	err = p.inventorySrv.ProductService.CreateProduct(&input)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
