@@ -1,0 +1,109 @@
+package main
+
+import (
+	ctx "context"
+	"os"
+	"sample-scm-backend/api/routes"
+	"sample-scm-backend/config"
+	"sample-scm-backend/services"
+
+	"github.com/AMETORY/ametory-erp-modules/auth"
+	"github.com/AMETORY/ametory-erp-modules/context"
+	"github.com/AMETORY/ametory-erp-modules/distribution"
+	"github.com/AMETORY/ametory-erp-modules/file"
+	"github.com/AMETORY/ametory-erp-modules/inventory"
+	"github.com/AMETORY/ametory-erp-modules/order"
+	"github.com/AMETORY/ametory-erp-modules/shared/audit_trail"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+)
+
+func main() {
+	ctx := ctx.Background()
+	cfg, err := config.InitConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	db, err := services.InitDB(cfg)
+	if err != nil {
+		panic(err)
+	}
+	redisClient := services.InitRedis()
+	websocket := services.InitWS()
+	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:3036",
+		},
+		AllowMethods: []string{"PUT", "PATCH", "GET", "POST", "DELETE", "HEAD"},
+		AllowHeaders: []string{
+			"Origin",
+			"Authorization",
+			"Content-Length",
+			"Content-Type",
+			"Access-Control-Allow-Origin",
+			"API-KEY",
+			"Currency-Code",
+			"Cache-Control",
+			"X-Requested-With",
+			"Content-Disposition",
+			"Content-Description",
+			"ID-Company",
+			"start-date",
+			"end-date",
+			"ID-Distributor",
+			"timezone",
+		},
+		ExposeHeaders: []string{"Content-Length", "Content-Disposition", "Content-Description"},
+	}))
+
+	skipMigration := true
+
+	if os.Getenv("MIGRATION") != "" {
+		skipMigration = false
+	}
+
+	erpContext := context.NewERPContext(db, nil, &ctx, skipMigration)
+	appService := services.NewAppService(erpContext, cfg, redisClient, websocket)
+	erpContext.AppService = appService
+
+	authService := auth.NewAuthService(erpContext)
+	erpContext.AuthService = authService
+
+	fileService := file.NewFileService(erpContext, cfg.Server.BaseURL)
+	erpContext.FileService = fileService
+
+	rbacSrv := auth.NewRBACService(erpContext)
+	erpContext.RBACService = rbacSrv
+
+	inventorySrv := inventory.NewInventoryService(erpContext)
+	erpContext.InventoryService = inventorySrv
+
+	auditTrailSrv := audit_trail.NewAuditTrailService(erpContext)
+
+	orderService := order.NewOrderService(erpContext)
+	erpContext.OrderService = orderService
+
+	distributionSrv := distribution.NewDistributionService(erpContext, auditTrailSrv, inventorySrv, orderService)
+	erpContext.DistributionService = distributionSrv
+
+	v1 := r.Group("/api/v1")
+
+	r.Static("/assets/files", "./assets/files")
+	routes.SetupWSRoutes(v1, erpContext)
+	routes.SetupAuthRoutes(v1, erpContext)
+	routes.SetupProductRoutes(v1, erpContext)
+	routes.SetupProductCategoryRoutes(v1, erpContext)
+	routes.SetupStockMovementRoutes(v1, erpContext)
+	routes.SetupUnitRoutes(v1, erpContext)
+	routes.SetupStorageRoutes(v1, erpContext)
+	routes.SetupLogisticRoutes(v1, erpContext)
+
+	if os.Getenv("GEN_PERMISSIONS") != "" {
+		appService.GenerateDefaultPermissions()
+	}
+
+	r.Run(":" + config.App.Server.Port)
+}
