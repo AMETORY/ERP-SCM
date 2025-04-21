@@ -10,7 +10,7 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	// Email    EmailConfig
-	// Google   GoogleConfig
+	Google GoogleConfig
 	// Whatsapp WhatsappConfig
 }
 

@@ -23,6 +23,23 @@ func NewLogisticHandler(ctx *context.ERPContext) *LogisticHandler {
 	return &LogisticHandler{ctx: ctx, distributionSrv: distributionSrv}
 }
 
+func (h *LogisticHandler) ReadDistributionEventHandler(c *gin.Context) {
+	id := c.Param("id")
+	event, err := h.distributionSrv.LogisticService.GetDistributionEvent(id)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"data": event, "message": "Distribution event detail successfully"})
+}
+func (h *LogisticHandler) ListDistributionEventsHandler(c *gin.Context) {
+	events, err := h.distributionSrv.LogisticService.ListDistributionEvents(*c.Request, c.Query("search"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"data": events, "message": "Distribution events retrieved successfully"})
+}
 func (h *LogisticHandler) CreateDistributionEventHandler(c *gin.Context) {
 	// Implement logic for creating a distribution event
 	var input models.DistributionEventModel

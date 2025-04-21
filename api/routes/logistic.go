@@ -14,6 +14,8 @@ func SetupLogisticRoutes(r *gin.RouterGroup, erpContext *context.ERPContext) {
 	logisticGroup.Use(middlewares.AuthMiddleware(erpContext, false))
 	{
 		logisticGroup.POST("/create-distribution-event", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:logistic:create-distribution-event"}), handler.CreateDistributionEventHandler)
+		logisticGroup.GET("/list-distribution-event", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:logistic:list-distribution-event"}), handler.ListDistributionEventsHandler)
+		logisticGroup.GET("/distribution-event/:id", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:logistic:read-distribution-event"}), handler.ReadDistributionEventHandler)
 		logisticGroup.POST("/create-shipment", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:logistic:create-shipment"}), handler.CreateShipmentHandler)
 		logisticGroup.PUT("/ready-to-ship/:id", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:logistic:ready-to-ship"}), handler.ReadyToShipHandler)
 		logisticGroup.PUT("/process-shipment/:id", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:logistic:process-shipment"}), handler.ProcessShipmentHandler)

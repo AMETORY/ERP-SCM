@@ -38,9 +38,17 @@ func (s *StorageHandler) CreateWarehouseHandler(c *gin.Context) {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(201, gin.H{"message": "Warehouse created successfully", "data": warehouse})
+	c.JSON(200, gin.H{"message": "Warehouse created successfully", "data": warehouse})
 }
 
+func (s *StorageHandler) GetWarehousesHandler(c *gin.Context) {
+	data, err := s.distributionSrv.StorageService.GetWarehouses(*c.Request, c.Query("search"))
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "Warehouses retrieved successfully", "data": data})
+}
 func (s *StorageHandler) UpdateWarehouseHandler(c *gin.Context) {
 	id := c.Param("id")
 	var input models.WarehouseModel
@@ -77,11 +85,17 @@ func (s *StorageHandler) CreateWarehouseLocationHandler(c *gin.Context) {
 		return
 	}
 	location := models.LocationPointModel{
-		Name:      input.Name,
-		Address:   input.Address,
-		Latitude:  input.Lat,
-		Longitude: input.Lng,
-		Type:      input.Type,
+		Name:        input.Name,
+		Address:     input.Address,
+		Latitude:    input.Lat,
+		Longitude:   input.Lng,
+		Type:        input.Type,
+		Description: input.Description,
+		ProvinceID:  input.ProvinceID,
+		RegencyID:   input.RegencyID,
+		DistrictID:  input.DistrictID,
+		VillageID:   input.VillageID,
+		ZipCode:     input.ZipCode,
 	}
 
 	var warehouse *models.WarehouseModel
@@ -97,7 +111,7 @@ func (s *StorageHandler) CreateWarehouseLocationHandler(c *gin.Context) {
 		return
 	}
 	location.Warehouse = warehouse
-	c.JSON(201, gin.H{"message": "WarehouseLocation created successfully", "data": location})
+	c.JSON(200, gin.H{"message": "WarehouseLocation created successfully", "data": location})
 }
 
 func (s *StorageHandler) UpdateWarehouseLocationHandler(c *gin.Context) {

@@ -47,9 +47,13 @@ func (a AppService) GenerateDefaultPermissions() []models.PermissionModel {
 				{"product_attribute": cruds},
 				{"warehouse": cruds},
 				{"unit": cruds},
+				{"stock_movement": cruds},
+				{"stock_opname": cruds},
 			},
 			"distribution": {
 				{"logistic": []string{
+					"read-distribution-event",
+					"list-distribution-event",
 					"create-distribution-event",
 					"create-shipment",
 					"ready-to-ship",
@@ -63,6 +67,7 @@ func (a AppService) GenerateDefaultPermissions() []models.PermissionModel {
 					"report-lost-damage",
 				}},
 				{"storage": []string{
+					"list-warehouse",
 					"create-warehouse",
 					"delete-warehouse",
 					"update-warehouse",

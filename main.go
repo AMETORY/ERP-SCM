@@ -17,7 +17,9 @@ import (
 	"github.com/AMETORY/ametory-erp-modules/inventory"
 	"github.com/AMETORY/ametory-erp-modules/order"
 	"github.com/AMETORY/ametory-erp-modules/shared/audit_trail"
+	"github.com/AMETORY/ametory-erp-modules/shared/indonesia_regional"
 	"github.com/AMETORY/ametory-erp-modules/shared/models"
+	"github.com/AMETORY/ametory-erp-modules/thirdparty/google"
 	"github.com/AMETORY/ametory-erp-modules/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -94,6 +96,13 @@ func main() {
 	distributionSrv := distribution.NewDistributionService(erpContext, auditTrailSrv, inventorySrv, orderService)
 	erpContext.DistributionService = distributionSrv
 
+	indonesiaRegSrv := indonesia_regional.NewIndonesiaRegService(erpContext)
+	erpContext.IndonesiaRegService = indonesiaRegSrv
+
+	googleSrv := google.NewGoogleAPIService(erpContext, cfg.Google.APIKey)
+
+	erpContext.AddThirdPartyService("google", googleSrv)
+
 	flagCreateUser := flag.Bool("create-user", false, "create user with default permissions")
 	flagEmail := flag.String("email", "", "user email")
 	flagFullName := flag.String("full-name", "", "user full name")
@@ -146,7 +155,10 @@ func main() {
 	routes.SetupStockMovementRoutes(v1, erpContext)
 	routes.SetupUnitRoutes(v1, erpContext)
 	routes.SetupStorageRoutes(v1, erpContext)
+	routes.SetupStockOpnameRoutes(v1, erpContext)
 	routes.SetupLogisticRoutes(v1, erpContext)
+	routes.SetupCommonRoutes(v1, erpContext)
+	routes.SetupRegionalRoutes(v1, erpContext)
 
 	if os.Getenv("GEN_PERMISSIONS") != "" {
 		appService.GenerateDefaultPermissions()

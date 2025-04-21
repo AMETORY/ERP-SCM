@@ -15,11 +15,12 @@ func SetupStorageRoutes(r *gin.RouterGroup, erpContext *context.ERPContext) {
 	{
 		locationPointGroup.POST("/warehouse/create", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:create-warehouse"}), handler.CreateWarehouseHandler)
 		locationPointGroup.PUT("/warehouse/:id", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:delete-warehouse"}), handler.UpdateWarehouseHandler)
+		locationPointGroup.GET("/warehouse/list", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:list-warehouse"}), handler.GetWarehousesHandler)
 		locationPointGroup.DELETE("/warehouse/:id", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:delete-warehouse"}), handler.DeleteWarehouseHandler)
 		locationPointGroup.POST("/location/create", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:create-create"}), handler.CreateWarehouseLocationHandler)
 		locationPointGroup.PUT("/location/:id", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:update-location"}), handler.UpdateWarehouseLocationHandler)
 		locationPointGroup.DELETE("/location/:id", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:delete-location"}), handler.DeleteWarehouseLocationHandler)
-		locationPointGroup.GET("/:id", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:get-location-detail"}), handler.GetWarehouseLocationByIDHandler)
+		locationPointGroup.GET("/location/:id", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:get-location-detail"}), handler.GetWarehouseLocationByIDHandler)
 		locationPointGroup.GET("location/list", middlewares.RbacUserMiddleware(erpContext, []string{"distribution:storage:get-locations"}), handler.GetWarehouseLocationsHandler)
 	}
 }
