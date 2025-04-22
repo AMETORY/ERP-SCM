@@ -23,6 +23,26 @@ func NewLogisticHandler(ctx *context.ERPContext) *LogisticHandler {
 	return &LogisticHandler{ctx: ctx, distributionSrv: distributionSrv}
 }
 
+func (h *LogisticHandler) DeleteDistributionEventHandler(c *gin.Context) {
+	id := c.Param("id")
+	err := h.distributionSrv.LogisticService.DeleteDistributionEvent(id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "Distribution event deleted successfully"})
+}
+
+func (h *LogisticHandler) GetDistributionEventReportHandler(c *gin.Context) {
+	id := c.Param("id")
+	report, err := h.distributionSrv.LogisticService.GetDistributionEventReport(id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"data": report, "message": "Distribution event report retrieved successfully"})
+}
+
 func (h *LogisticHandler) ReadDistributionEventHandler(c *gin.Context) {
 	id := c.Param("id")
 	event, err := h.distributionSrv.LogisticService.GetDistributionEvent(id)
@@ -55,6 +75,69 @@ func (h *LogisticHandler) CreateDistributionEventHandler(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Distribution event created successfully"})
 }
 
+func (h *LogisticHandler) DeleteShipmentHandler(c *gin.Context) {
+	id := c.Param("id")
+	err := h.distributionSrv.LogisticService.DeleteShipment(id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "Shipment deleted successfully"})
+}
+func (h *LogisticHandler) ReadShipmentHandler(c *gin.Context) {
+	id := c.Param("id")
+	shipment, err := h.distributionSrv.LogisticService.GetShipment(id)
+	if err != nil {
+		c.JSON(404, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"data": shipment, "message": "Shipment retrieved successfully"})
+}
+
+func (h *LogisticHandler) UpdateStatusShipmentHandler(c *gin.Context) {
+	id := c.Param("id")
+	var input struct {
+		Status string `json:"status"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	err := h.distributionSrv.LogisticService.UpdateStatusShipment(id, input.Status)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "Shipment status updated successfully"})
+}
+
+func (h *LogisticHandler) AddItemShipmentHandler(c *gin.Context) {
+	id := c.Param("id")
+	var input models.ShipmentItem
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	err := h.distributionSrv.LogisticService.AddItemShipment(id, &input)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "Item added to shipment successfully"})
+}
+
+func (h *LogisticHandler) DeleteItemShipmentHandler(c *gin.Context) {
+	id := c.Param("id")
+	itemID := c.Param("itemId")
+
+	err := h.distributionSrv.LogisticService.DeleteItemShipment(id, itemID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "Item deleted from shipment successfully"})
+}
+
 func (h *LogisticHandler) CreateShipmentHandler(c *gin.Context) {
 	var input models.ShipmentModel
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -66,7 +149,7 @@ func (h *LogisticHandler) CreateShipmentHandler(c *gin.Context) {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Shipment created successfully"})
+	c.JSON(200, gin.H{"message": "Shipment created successfully", "data": input})
 }
 
 func (h *LogisticHandler) ReadyToShipHandler(c *gin.Context) {
@@ -139,8 +222,8 @@ func (h *LogisticHandler) StartShipmentLegHandler(c *gin.Context) {
 
 func (h *LogisticHandler) ArrivedShipmentLegHandler(c *gin.Context) {
 	var input struct {
-		Notes string    `json:"notes"`
-		Date  time.Time `json:"date"`
+		Notes string    `json:"notes" binding:"required"`
+		Date  time.Time `json:"date" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
@@ -156,18 +239,14 @@ func (h *LogisticHandler) ArrivedShipmentLegHandler(c *gin.Context) {
 }
 
 func (h *LogisticHandler) AddTrackingEventHandler(c *gin.Context) {
-	var input struct {
-		Status    string  `json:"status"`
-		Latitude  float64 `json:"latitude"`
-		Longitude float64 `json:"longitude"`
-		Notes     string  `json:"notes"`
-	}
+	var input models.TrackingEventModel
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 	id := c.Param("id")
-	err := h.distributionSrv.LogisticService.AddTrackingEvent(id, input.Status, input.Latitude, input.Longitude, input.Notes)
+	input.ShipmentLegID = &id
+	err := h.distributionSrv.LogisticService.AddTrackingEvent(id, &input)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -188,12 +267,7 @@ func (h *LogisticHandler) GenerateShipmentReportHandler(c *gin.Context) {
 func (h *LogisticHandler) GenerateDistributorEventReportHandler(c *gin.Context) {
 	id := c.Param("id")
 
-	var reportID *string
-	if c.Query("report_id") != "" {
-		repID := c.Query("report_id")
-		reportID = &repID
-	}
-	report, err := h.distributionSrv.LogisticService.GenerateDistributionEventReport(id, reportID)
+	report, err := h.distributionSrv.LogisticService.GenerateDistributionEventReport(id)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
